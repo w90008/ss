@@ -1,134 +1,156 @@
-<!DOCTYPE html>
-<html lang="en" manifest="cache.appcache">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ps4 jailbreak</title>
-<style>
-  html, body { margin:0; padding:0; background:#0b0d10; color:#c8ced8;
-               font:15px/1.45 "Segoe UI", system-ui, sans-serif; }
-  #wrap { padding:16px 18px; }
-  #state { font-size:44px; font-weight:700; margin:0 0 6px; }
-  #det { font-size:26px; color:#8b95a3; margin:0 0 4px; }
-  #det b { color:#c8ced8; font-weight:600; }
-  #cache { font-size:24px; color:#5c6672; margin:0 0 10px; min-height:14px; }
-  #cache.cacheok { color:#7fd0a0; }
-  .ok { color:#7fd0a0; } .bad { color:#d08a7f; } .warn { color:#d8c07f; }
-  #brand { text-align:center; padding:8px 10px; background:#0e1116;
-           border-bottom:1px solid #1e2732; }
-  #brand img { width:28px; height:28px; margin-right:8px; border-radius:50%;
-               vertical-align:middle; }
-  #brand b { font-size:30px; font-weight:700; letter-spacing:.14em;
-             color:#e6ebf2; vertical-align:middle; }
-</style>
-</head>
-<body>
-<div id="wrap">
-  <div id="state">detecting firmware...</div>
-  <div id="det"></div>
-  <div id="cache"></div>
-</div>
+<html> 
+  <head> 
+    <meta charset="utf-8"> 
+    <title>مكتب السراب</title> 
+    <style> 
+      body { 
+        background-color: #000000; 
+        color: #ffffff; 
+        font-family: "Segoe UI", Tahoma, sans-serif; 
+        text-align: center; 
+      } 
+      .container { 
+		position: relative; 
+		z-index: 2; 
+		display: flex; 
+		flex-direction: column; 
+		justify-content: center; 
+		align-items: center; 
+        } 
+      .header-section { 
+		text-align: center; 
+      } 
+      .main-title { 
+		background: linear-gradient(45deg, #ff00aa, #00ffff, #ff00ff, #00ff9d); 
+		background-size: 300% 300%; 
+		-webkit-background-clip: text; 
+		-webkit-text-fill-color: transparent; 
+		animation: gradientFlow 8s ease infinite; 
+		text-shadow: 0 0 30px rgba(255, 0, 170, 0.7); 
+      } 
+      #console { 
+        font-family: monospace; 
+        color: #ffffff; 
+        padding: 12px; 
+        font-size: 18px; 
+        text-align: left; 
+      } 
+    </style> 
+    <script> 
+      if (window.applicationCache.status === 0) { // 0: UNCACHED 
+        window.location.replace("cache.html"); 
+      } 
+    </script> 
+  </head> 
+  <body> 
 
-<script>
-(function () {
-    var stateEl = document.getElementById("state");
-    var detEl = document.getElementById("det");
-    var cacheEl = document.getElementById("cache");
-    function setState(t, c) { stateEl.textContent = t; stateEl.className = c || ""; }
-    function setCache(t, ok) { cacheEl.textContent = t; cacheEl.className = ok ? "cacheok" : ""; }
-    var params = new URLSearchParams(location.search);
+    <!-- الصورة المضافة فقط -->
+    <img src="image.png" alt="" style="display:block; width:180px; height:180px; object-fit:contain; margin:20px auto 10px;">
 
-    var key = null, fwnum = null;
-    var m = /PlayStation\s+4[\/ ](\d+)\.(\d+)/.exec(navigator.userAgent);
-    if (m) {
-        var minor = parseInt(m[2], 16);
-        var ms = minor.toString(16);
-        if (ms.length < 2) ms = "0" + ms;
-        key = m[1] + "." + ms;
-        fwnum = parseInt(m[1], 10) * 100 + parseInt(ms, 10);
-    }
-    var bug = null, why = "";
-    var forced = params.get("bug");
-    if (forced === "lapse" || forced === "poops") {
-        bug = forced; why = "forced via ?bug=" + forced;
-    } else if (!key) {
-        why = "user-agent is not a PlayStation 4";
-    } else if (fwnum <= 1202) {
-        bug = "lapse"; why = key + " <= 12.02";
-    } else if (fwnum >= 1250) {
-        bug = "poops"; why = key + " >= 12.50";
-    } else {
-        why = key + " -- no working bug (lapse ends at 12.02, poops needs 12.50)";
-    }
-    detEl.innerHTML = "firmware <b>" + (key || "unknown") + "</b>"
-        + " &middot; bug <b>" + (bug || "none") + "</b> &middot; " + why;
-
-    if (!bug) { setState("UNSUPPORTED FIRMWARE", "bad"); return; }
-
-    var target = (bug === "lapse" ? "run_lapse.html" : "run_poops.html")
-        + location.search;
-    function go() { setState("loading " + bug + " chain...", "warn");
-                    location.replace(target); }
-
-    function waitForTap(msg, action) {
-        setState(msg, "warn");
-        function fire() {
-            window.removeEventListener("click", fire);
-            window.removeEventListener("keydown", fire);
-            action();
-        }
-        window.addEventListener("click", fire);
-        window.addEventListener("keydown", fire);
-    }
-
-    var ac = window.applicationCache;
-    if (!ac || !document.documentElement.hasAttribute("manifest")) {
-        go();
-    } else if (!navigator.onLine) {
-        setCache("offline -- from cache", true);
-        go();
-    } else if (ac.status === ac.IDLE) {
-        setCache("cached", true);
-        go();
-    } else if (ac.status === ac.UPDATEREADY) {
-        try { ac.swapCache(); } catch (e) {}
-        setCache("update downloaded", true);
-        waitForTap("UPDATE READY -- Tekan tombol Enter  X/O",
-                   function () { location.reload(); });
-    } else {
-        setCache("checking cache...");
-        ac.addEventListener("downloading",
-            function () { setCache("caching for offline (first run)..."); }, false);
-        ac.addEventListener("progress", function (e) {
-            if (e && e.total)
-                setCache("caching " + Math.round((e.loaded / e.total) * 100) + "%");
-        }, false);
-
-        ac.addEventListener("cached", function () {
-            setCache("cached for offline use", true);
-            waitForTap("CACHED (first run) -- Tekan tombol Enter  X/O", go);
-        }, false);
-        ac.addEventListener("updateready", function () {
-            try { ac.swapCache(); } catch (e) {}
-            setCache("update downloaded", true);
-            waitForTap("UPDATE READY -- Tekan tombol Enter  X/O",
-                       function () { location.reload(); });
-        }, false);
-
-        ac.addEventListener("noupdate", function () {
-            setCache("cached -- offline ready", true);
-            go();
-        }, false);
-        ac.addEventListener("error", function () {
-            setCache("cache unavailable");
-            waitForTap("CACHE FAILED -- Tekan tombol Enter  X/O", go);
-        }, false);
-        ac.addEventListener("obsolete", function () {
-            setCache("cache obsolete");
-            waitForTap("CACHE OBSOLETE -- Tekan tombol Enter  X/O", go);
-        }, false);
-    }
-})();
-</script>
-</body>
+    <div class="container"> 
+        <div class="header-section"> 
+            <h1 class="main-title">محمد خالد للشروحات 07714434273</h1> 
+        </div> 
+    </div> 
+    <div style='text-align:left;position:fixed;left:10px;bottom:10px;width:100%;font-size:12px;color:#888'><center>Special Thanks to:<br><strong> TheFloW - SpecterDev  -ChendoChap - Znullptr - Sleirsgoevy - SiSTRo - Feyzee - CM<br>And everyone who helps improve the PS4 scene</strong></center></font></div> 
+	<pre id="console"></pre> 
+  </body> 
+  <script> 
+    // 6.72 JB globals 
+    window.entrypoint672_result = 0; 
+    window.exploitsetup672_result = 0; 
+    // Device FW version holder 
+    var config_target = 0x0000; 
+    // Logging utility 
+    var outputConsole = document.getElementById("console"); 
+    window.log = function (msg, color) { 
+      if (color === undefined) color = "#cccccc"; 
+      outputConsole.innerHTML += '<span style="color:' + color + '">' + msg + '</span><br>'; 
+    }; 
+    // Get Script for ES5 JavaScript 
+    window.getScriptES5 = function (source, callback) { 
+      var gs = document.createElement('script'); 
+      gs.src = source; 
+      gs.onload = callback; 
+      gs.async = false; 
+      document.body.appendChild(gs); 
+    } 
+    // Event definitions 
+    window.addEventListener('error', function (event) { 
+      var reason = event.error; 
+      var msg = 'Unhandled error\n'; 
+      if (reason) { 
+        msg += reason + '\n'; 
+        if (reason.sourceURL) 
+          msg += reason.sourceURL; 
+        if (reason.line) 
+          msg += ':' + reason.line; 
+        if (reason.column) 
+          msg += ':' + reason.column; 
+        if (reason.stack) 
+          msg += '\n' + reason.stack; 
+      } else { 
+        msg += 'No error object'; 
+      } 
+      alert(msg); 
+      return true; 
+    }); 
+    // Dynamic 6.72 entrypoint loader 
+    window.addEventListener('load', function () { 
+      var ua = navigator.userAgent; 
+      var isPS4 = ua.indexOf("PlayStation 4") !== -1; 
+      var is67x = ((ua.indexOf(" 6.70") !== -1) || (ua.indexOf(" 6.71") !== -1) || (ua.indexOf(" 6.72") !== -1)); 
+      if (isPS4 && is67x && (window.applicationCache.status !== 0)) { 
+        var xhr = new XMLHttpRequest(); 
+        xhr.open('GET', '672entrypoint.js', false); 
+        xhr.send(''); 
+        if (xhr.status === 200) 
+          eval.call(top.window, xhr.responseText); 
+      } 
+    }); 
+    window.checkPlatformIsSupported = function () { 
+      var userAgent = navigator.userAgent; 
+      var psRegex = /PlayStation (4|5)[ \/]([0-9]{1,2}\.[0-9]{2})/; 
+      var match = userAgent.match(psRegex); 
+      if (!match) return false; 
+      var device = match[1];    // "4" or "5" 
+      var fwVersion = match[2]; // "9.00", "9.03", etc. 
+      // Convert "9.00" to 0x900 
+      config_target = parseInt(fwVersion.replace('.', ''), 16); 
+      window.log("Firmware PS" + device + " ini: " + fwVersion + "\n"); 
+      // Supported FW lists 
+      var supportedFW = { 
+        "4": ["5.05", "6.70", "6.71", "6.72", 
+              "7.00", "7.01", "7.02", "7.50", "7.51", "7.55", 
+              "8.00", "8.01", "8.03", "8.50", "8.52", 
+              "9.00", "9.03", "9.04", "9.50", "9.51", "9.60"], 
+        "5": ["0.00"] 
+      }; 
+      // Check device exists 
+      if (!supportedFW[device]) return false; 
+      // FW control 
+      return supportedFW[device].indexOf(fwVersion) !== -1; 
+    } 
+ 
+    window.addEventListener('load', function () { 
+      outputConsole.textContent = ""; // Clear console log 
+      // window.log("Initializing Exploit Chain..."); 
+ 
+      try { 
+        if (!window.checkPlatformIsSupported()) { 
+          window.log("Mohon maaf, hanya untuk PS4 5.05, 6.70 - 9.60", "red"); 
+        } else { 
+          if (config_target === 0x505) { // 5.05 
+            window.log("Starting 5.05 Exploit..."); 
+            window.getScriptES5('505exploit.js', function () { setTimeout(exploit505, 3000); }); 
+          } else { 
+            window.log("Starting main exploit..."); 
+            window.getScriptES5('main.js', function () { setTimeout(doJailBreak, 1500); }); 
+          } 
+        } 
+      } catch (error) { 
+        window.log("An error occured during exploit: " + error, "red"); 
+      } 
+    }); 
+  </script> 
 </html>
